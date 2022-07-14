@@ -65,7 +65,9 @@ namespace Quandt.Endpoints
             var body = Expression.Call(instance, propertyInfo.GetSetMethod(), parameter);
             var parameters = new ParameterExpression[] { instance, parameter };
 
-            return Expression.Lambda<Action<TEntity, TProperty>>(body, parameters).Compile();
+            var lambda = Expression.Lambda<Action<TEntity, TProperty>>(body, parameters);
+            
+            return lambda.Compile();
         }
 
         private readonly bool _isRouted = false;
