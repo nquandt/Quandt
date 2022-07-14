@@ -10,9 +10,9 @@ namespace Quandt.Endpoints.PipelineHandlers
 {
     internal class DefaultHandler : IHandler<IBaseEndpointAsync>
     {
-        Func<IBaseEndpointAsync, CancellationToken, Task>[] IHandler<IBaseEndpointAsync>.Funcs => new Func<IBaseEndpointAsync, CancellationToken, Task>[]
+        public async Task Handle(IBaseEndpointAsync endpoint, CancellationToken ct)
         {
-            (IBaseEndpointAsync baseEndpointAsync, CancellationToken ct) => baseEndpointAsync.HandleContextAsync(ct)
-        };
+            await endpoint.HandleContextAsync(ct);
+        }
     }
 }

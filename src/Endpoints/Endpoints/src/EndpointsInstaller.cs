@@ -34,8 +34,13 @@ namespace Quandt.Endpoints
                 ? types.Select(x => x.Assembly).Distinct()
                 : AppDomain.CurrentDomain.GetAssemblies();
 
-            _asyncEndpoints = assemblies.Select(x => x.GetTypes().Where(x => typeof(IBaseEndpointAsync).IsAssignableFrom(x) && x.IsClass && !x.IsAbstract)).Aggregate((x, y) => x.Concat(y)).Distinct();
-            _endpoints = assemblies.Select(x => x.GetTypes().Where(x => typeof(IBaseEndpoint).IsAssignableFrom(x) && x.IsClass && !x.IsAbstract)).Aggregate((x, y) => x.Concat(y)).Distinct();
+            _asyncEndpoints = GetImplementationsFromAssemblies<IBaseEndpointAsync>(assemblies);
+            _endpoints = GetImplementationsFromAssemblies<IBaseEndpoint>(assemblies);
+        }
+
+        private IEnumerable<Type> GetImplementationsFromAssemblies<T>(IEnumerable<Assembly> assemblies)
+        {
+            return assemblies.Select(x => x.GetTypes().Where(x => typeof(T).IsAssignableFrom(x) && x.IsClass && !x.IsAbstract)).Aggregate((x, y) => x.Concat(y)).Distinct();
         }
 
         public void ConfigureServices(IServiceCollection services)
@@ -49,30 +54,25 @@ namespace Quandt.Endpoints
                 services.AddTransient(asyncEndpoint);
             }
 
-            services.AddSingleton<ISerializerFactory, DefaultSerializerFactory>();
-            services.AddSingleton<IErrorHandler, DefaultErrorHandler>();
-            services.AddSingleton<EndpointPipeline>();
+            services.AddSingleton<ISerializerFactory, DefaultSerializerFactory>();            
+            services.AddSingleton<EndpointPipelineRunner>();
         }
-
-        
 
         public void Configure(WebApplication app)
         {
-            var pipeline = app.Services.GetRequiredService<EndpointPipeline>();
+            var pipeline = app.Services.GetRequiredService<EndpointPipelineRunner>();
 
             var _delegateTypeFactory = new DelegateTypeFactory();
 
             foreach (var endpoint in _asyncEndpoints)
-            {
-                pipeline.RegisterPipelinesFor<IWithRequestEndpoint>(endpoint);
-                pipeline.RegisterPipelinesFor<IBaseEndpointAsync>(endpoint);
-                pipeline.RegisterPipelinesFor<IWithResultEndpoint>(endpoint);
+            {                
+                pipeline.RegisterPipelinesFor<IWithRequestEndpoint>(endpoint, typeof(WithRequestEndpointPipeline<>));
+                pipeline.RegisterPipelinesFor<IBaseEndpointAsync>(endpoint, typeof(DefaultEndpointPipeline));
+                pipeline.RegisterPipelinesFor<IWithResultEndpoint>(endpoint, typeof(WithResultEndpointPipeline<>));
 
                 var atts = endpoint.GetCustomAttributes(typeof(RouteAttribute), true)
-                .Select(x => (RouteAttribute)x);
+                    .Select(x => (RouteAttribute)x);
                 if (!atts.Any()) { continue; }
-
-
                 var routeAtt = atts.First()!;
 
 

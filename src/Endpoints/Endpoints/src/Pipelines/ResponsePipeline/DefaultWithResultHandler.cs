@@ -13,11 +13,10 @@ namespace Quandt.Endpoints.PipelineHandlers
 
     internal class DefaultWithResultHandler<T> : IHandler<IWithResultEndpoint>
     {
-        Func<IBaseEndpointAsync, CancellationToken, Task>[] IHandler<IWithResultEndpoint>.Funcs => new Func<IBaseEndpointAsync, CancellationToken, Task>[]
+        public async Task Handle(IBaseEndpointAsync endpoint, CancellationToken ct)
         {
-            ResponseWithModel
-        };
-
+            await ResponseWithModel(endpoint, ct);
+        }
 
         private static async Task ResponseWithModel(IBaseEndpointAsync endpoint, CancellationToken ct)
         {
@@ -39,6 +38,7 @@ namespace Quandt.Endpoints.PipelineHandlers
                 {
                     context.Response.StatusCode = (int)System.Net.HttpStatusCode.BadRequest;
                     endpoint.Status.IsOkay = false;
+                    endpoint.Status.Message = "There is no serializer that supports that [Accept] type";
                     return;
                     //return new Result()
                     //{

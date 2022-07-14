@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Quandt.Endpoints
+namespace Quandt.Endpoints.Models
 {
     internal class EndpointStatus
     {

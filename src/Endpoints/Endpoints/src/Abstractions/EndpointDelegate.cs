@@ -1,16 +1,17 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Quandt.Abstractions;
+using Quandt.Endpoints.Models;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
 #pragma warning disable CS8618 // Non-nullable field must contain a non-null value when exiting constructor. Consider declaring as nullable.
 
-namespace Quandt.Endpoints
+namespace Quandt.Endpoints.Abstractions
 {
     internal class AsyncEndpointDelegate<T> where T : IBaseEndpointAsync
     {
-        public async Task ExecuteAsync(T api, EndpointPipeline pipeline, HttpContext context, ISerializerFactory serializerFactory, CancellationToken cancellationToken)
+        public async Task ExecuteAsync(T api, EndpointPipelineRunner pipeline, HttpContext context, ISerializerFactory serializerFactory, CancellationToken cancellationToken)
         {
             api.Context = context;
             api.SerializerFactory = serializerFactory;

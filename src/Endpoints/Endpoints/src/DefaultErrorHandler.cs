@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Quandt.Endpoints.Abstractions;
+using Quandt.Endpoints.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,11 +12,8 @@ using System.Threading.Tasks;
 namespace Quandt.Endpoints
 {
     internal class DefaultErrorHandler : IErrorHandler
-    {        
-        public DefaultErrorHandler(IServiceProvider serviceProvider)
-        { 
-           
-        }
+    {
+        public DefaultErrorHandler(IServiceProvider serviceProvider) { }
 
         public async Task Handle(HttpContext context, EndpointStatus status, CancellationToken ct)
         {

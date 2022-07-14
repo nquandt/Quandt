@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Quandt.Abstractions;
+using Quandt.Endpoints.Abstractions;
+using Quandt.Endpoints.Models;
 using System;
 using System.IO;
 using System.Threading;
@@ -15,8 +17,7 @@ namespace Quandt.Endpoints
         public static class WithRequest<TRequest> where TRequest : new()
         {
             public abstract class WithResult<TResponse> : IWithRequestEndpoint<TRequest>, IWithResultEndpoint<TResponse>
-            {
-                //private static EndpointModelCache<TRequest> _cache = new EndpointModelCache<TRequest>();
+            {                
                 public HttpContext Context { get; set; }
                 ISerializerFactory IBaseEndpointAsync.SerializerFactory
                 {
@@ -79,27 +80,13 @@ namespace Quandt.Endpoints
                             _status.IsOkay = false;
                             _status.Message = result.Message;
                         }
-                    }catch(Exception e)
+                    }
+                    catch (Exception e)
                     {
                         _status.IsOkay = false;
                         _status.Message = e.Message;
                     }
                 }
-                //private async Task PrivateHandleAsync(CancellationToken ct)
-                //{
-                //    var modelResult = await GetRequestModel(Context, _cache, _serializerFactory, ct);
-
-                //    if (!modelResult.Success) { return; }
-
-
-                //    var obj = await HandleAsync(modelResult.ResultObject, ct);
-
-
-
-                //    await ResponseWithModel(Context, obj, _serializerFactory);
-
-                //    return;
-                //}
             }
 
             //public abstract class WithoutResult : IBaseEndpointAsync

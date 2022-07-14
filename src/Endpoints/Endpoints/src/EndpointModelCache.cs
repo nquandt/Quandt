@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Linq.Expressions;
 #if NET6_0
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
@@ -15,8 +16,8 @@ namespace Quandt.Endpoints
     internal class EndpointModelCache<T>
     {
 #if NET6_0
-        private Dictionary<string, PropertyInfo>? _routeCache;
-        private Dictionary<string, PropertyInfo>? _queryCache;
+        private Dictionary<string, Action<T, string>>? _routeCache;
+        private Dictionary<string, Action<T, string>>? _queryCache;
 #elif NETSTANDARD2_0
         private Dictionary<string, PropertyInfo> _routeCache;
         private Dictionary<string, PropertyInfo> _queryCache;
@@ -32,29 +33,39 @@ namespace Quandt.Endpoints
             _isQuerys = query.Any();
 
             if (_isRouted) {
-                _routeCache = route.ToDictionary(x => x.Name, x => x);
+                _routeCache = route.ToDictionary(x => x.Name, x => CreateSetter<T,string>(x));
             }
 
             if (_isQuerys)
             {
-                _queryCache = query.ToDictionary(x => x.Name.ToUpper(), x => x);
+                _queryCache = query.ToDictionary(x => x.Name.ToUpper(), x => CreateSetter<T, string>(x));
                 var dataMembers = query.Where(x => x.GetCustomAttributes().Any(y => typeof(DataMemberAttribute).IsAssignableFrom(y.GetType())));
                 if (dataMembers.Any())
                 {
                     foreach(var member in dataMembers)
                     {
                         var attObj = member.GetCustomAttribute(typeof(DataMemberAttribute), true);
-                        if (attObj != null)
-                        {
-                            var att = (DataMemberAttribute)attObj;
+                        if (attObj != null && attObj is DataMemberAttribute att)
+                        {                            
                             if (att.Name != null)
                             {
-                                _queryCache[att.Name.ToUpper()] = member;
+                                _queryCache[att.Name.ToUpper()] = CreateSetter<T, string>(member);
                             }
                         }
                     }
                 }
             }
+        }
+
+        public static Action<TEntity, TProperty> CreateSetter<TEntity, TProperty>(PropertyInfo propertyInfo)
+        {
+            ParameterExpression instance = Expression.Parameter(typeof(TEntity), "instance");
+            ParameterExpression parameter = Expression.Parameter(typeof(TProperty), "param");
+
+            var body = Expression.Call(instance, propertyInfo.GetSetMethod(), parameter);
+            var parameters = new ParameterExpression[] { instance, parameter };
+
+            return Expression.Lambda<Action<TEntity, TProperty>>(body, parameters).Compile();
         }
 
         private readonly bool _isRouted = false;
@@ -74,9 +85,9 @@ namespace Quandt.Endpoints
                 var keys = dict.Keys;
                 foreach (var key in keys)
                 {
-                    if (_routeCache.TryGetValue(key, out var property))
+                    if (_routeCache.TryGetValue(key, out var setProperty))
                     {
-                        property.SetValue(model, dict[key]);
+                        setProperty(model, (string)dict[key]);                        
                     }
                 }
             }
@@ -91,9 +102,9 @@ namespace Quandt.Endpoints
                 var keys = query.Keys;
                 foreach (var key in keys)
                 {
-                    if (_queryCache.TryGetValue(key.ToUpper(), out var property))
+                    if (_queryCache.TryGetValue(key.ToUpper(), out var setProperty))
                     {
-                        property.SetValue(model, query[key].ToString());
+                        setProperty(model, query[key].ToString());
                     }
                 }
             }

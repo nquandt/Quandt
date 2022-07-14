@@ -9,11 +9,12 @@ namespace Quandt.Endpoints.Abstractions
 {
     internal interface IHandler<T> : IHandler
     {
-        Func<IBaseEndpointAsync, CancellationToken, Task>[] Funcs { get; }
+        //Func<IBaseEndpointAsync, CancellationToken, Task>[] Funcs { get; }
+        //Task Handle(IBaseEndpointAsync endpoint, CancellationToken cancellationToken);
     }
 
     internal interface IHandler
     {
-        
+        Task Handle(IBaseEndpointAsync endpoint, CancellationToken ct);
     }
 }

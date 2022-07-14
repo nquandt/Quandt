@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Quandt.Endpoints
+namespace Quandt.Endpoints.Abstractions
 {
     internal interface ISerializerFactory
     {

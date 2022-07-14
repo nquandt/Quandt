@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Quandt.Endpoints
+namespace Quandt.Endpoints.Models
 {
     internal class ApiRegistration
     {
