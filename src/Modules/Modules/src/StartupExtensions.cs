@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Reflection;
 
 namespace Quandt.Modules.Extensions
 {
@@ -9,9 +10,9 @@ namespace Quandt.Modules.Extensions
 #if NET6_0
     private static ModulesInstaller? _moduleInstaller;
 
-        public static IServiceCollection AddModulesForServices(this IServiceCollection services, params Type[] types)
+        public static IServiceCollection AddModulesForServices(this IServiceCollection services, params Assembly[] markers)
         {
-            _moduleInstaller = new ModulesInstaller(types);
+            _moduleInstaller = new ModulesInstaller(markers);
 
             _moduleInstaller.AddModules(services);
 
@@ -30,9 +31,9 @@ namespace Quandt.Modules.Extensions
 #elif NETSTANDARD2_0
         private static ModulesInstaller _moduleInstaller;
 
-        public static IServiceCollection AddModulesForServices(this IServiceCollection services, params Type[] types)
+        public static IServiceCollection AddModulesForServices(this IServiceCollection services, params Assembly[] markers)
         {
-            _moduleInstaller = new ModulesInstaller(types);
+            _moduleInstaller = new ModulesInstaller(markers);
 
             _moduleInstaller.AddModules(services);
 

@@ -12,13 +12,13 @@ namespace Quandt.Modules
         private List<IModule> _modules;
 
 #if NET6_0
-        public ModulesInstaller(Type[]? types = null)
+        public ModulesInstaller(Assembly[]? markers = null)
 #elif NETSTANDARD2_0
-        public ModulesInstaller(Type[] types = null)
+        public ModulesInstaller(Assembly[] markers = null)
 #endif
         {
-            IEnumerable<Assembly> assemblies = types != null  && types.Any()
-                ? types.Select(x => x.Assembly).Distinct()
+            IEnumerable<Assembly> assemblies = markers != null  && markers.Any()
+                ? markers.Distinct()
                 : AppDomain.CurrentDomain.GetAssemblies();
             
             _modules = new List<IModule>();

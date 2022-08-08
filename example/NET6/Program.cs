@@ -11,7 +11,7 @@ var markers = new Type[]
 };
 
 
-builder.Services.AddModulesForServices(markers);
+builder.Services.AddModulesForServices(markers.Select(x => x.Assembly).ToArray());
 
 var app = builder.Build();
 
