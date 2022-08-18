@@ -13,7 +13,6 @@ The TreeWalker Walk method will log to console when an Expression node doesnt ha
 
 Thanks for checking this out.
 
-tag: Metaprogamming
 The following was converted using this library (if anyone knows how to two column this on github I'll put the code side-by-side
 ```javascript
 function main(parm1, parm2) {
@@ -107,3 +106,6 @@ namespace GenerateJS
     }
 }
 ```
+
+
+tag: Metaprogamming
