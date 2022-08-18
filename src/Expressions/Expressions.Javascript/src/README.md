@@ -16,7 +16,7 @@ Thanks for checking this out.
 The following was converted using this library (if anyone knows how to two column this on github I'll put the code side-by-side
 ```javascript
 function main(parm1, parm2) {
-  var topLevel = ""this is top level and hopefully works"";
+  var topLevel = "this is top level and hopefully works";
 
   function hello(nod1){
       var thisThing = 4 + nod1 + topLevel;
