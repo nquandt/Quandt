@@ -38,6 +38,7 @@ namespace Quandt.Expressions.Javascript.Services
 
 
             Console.WriteLine($"[Handler Not Implemented]: {node.Type}");
+            //throw new Exception($"[Handler Not Implemented]: {node.Type}");
             return Expression.Empty();
         }
 

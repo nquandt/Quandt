@@ -39,7 +39,7 @@ namespace Quandt.Expressions.Javascript
             var tw = new StringWriter();
             program.WriteJson(tw, "    ");
 
-            File.WriteAllText(@"C:\Users\nquandt\source\repos\JSExpressions\JsExpressions\JsExpressions\Generated.json", tw.ToString());
+            File.WriteAllText(@".\Generated.json", tw.ToString()); //TODO add Settings so we can enable logging of the AST
 
             return Walk(program);
         }

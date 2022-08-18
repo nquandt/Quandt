@@ -23,6 +23,24 @@
 
 var transpiler = new Transpiler(@"
 function main(parm1, parm2) {
+var topLevel = ""this is top level and hopefully works"";
+
+function hello(nod1){
+    var thisThing = 4 + nod1 + topLevel;
+    var thisThing2 = nod1 + thisThing;
+
+
+    return thisThing2;
+}
+
+function hello2(nod1){
+    var thisThing = 4 + nod1;
+    var thisThing2 = nod1 + thisThing;
+    
+
+    return thisThing2;
+}
+
 const files = [ 'foo.txt ', '.bar', '   ', 'baz.foo' ];
 let filePaths = [];
 
@@ -42,15 +60,4 @@ return filePaths;
 var cSharp = transpiler.Convert();
 
 Console.WriteLine(cSharp);
-File.WriteAllText(@"C:\Users\nquandt\source\repos\JSExpressions\JsExpressions\JsExpressions\Generated.cs", cSharp);
-//try
-//{
-
-
-//    File.WriteAllText(@"C:\Users\nquandt\source\repos\JSExpressions\JsExpressions\JsExpressions\Generated.cs", cSharp);
-//    //Console.WriteLine(cSharp);
-//}
-//catch (Exception ex)
-//{
-//    Console.WriteLine(ex.ToString());
-//}
+File.WriteAllText(@".\Generated.cs", cSharp);
