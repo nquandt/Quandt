@@ -11,14 +11,15 @@ namespace Quandt.Expressions.Javascript.NodeHandlers
             var block = node as BlockStatement;
             if (block == null) { return Expression.Empty(); }
 
-            
-            using (VariableContextService.Enter())
+
+            return VariableContextService.Enter(() =>
             {
                 var exprs = Walk(block.Body);
+
                 var param = VariableContextService.GetCurrent().CurrentVariables;
 
                 return Expression.Block(param, exprs);
-            }
+            });
         }
     }
 }

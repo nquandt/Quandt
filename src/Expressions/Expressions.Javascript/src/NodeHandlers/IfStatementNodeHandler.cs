@@ -16,17 +16,38 @@ namespace Quandt.Expressions.Javascript.NodeHandlers
             Expression testExpr;
             if (test is ParameterExpression param)
             {
-                testExpr = Expression.NotEqual(param, Expression.Constant(null, typeof(object)));
+                testExpr = ResolveFalsyTest(param);
             }
             else
             {
                 testExpr = test;
             }
 
-            var block = Walk(iff.Consequent) as BlockExpression;
+            var walked = Walk(iff.Consequent);
 
+            var block =  walked as BlockExpression;
+            if (block == null)
+            {
+                block = Expression.Block(walked);
+            }
 
             return Expression.IfThen(testExpr, block);
+        }
+
+        private Expression ResolveFalsyTest(ParameterExpression param)
+        {
+            if (param.Type == typeof(string))
+            {
+                var nullOrWhiteSpace = typeof(string).GetMethod("IsNullOrWhiteSpace");
+                var callit = Expression.Call(param, nullOrWhiteSpace);
+                return Expression.Negate(callit);
+            }else if (param.Type == typeof(object))
+            {
+                return Expression.NotEqual(param, Expression.Constant(null, typeof(object)));
+            }
+
+
+            throw new NotSupportedException($"Haven't implemented that falsy test: {param.Type}");
         }
     }
 }

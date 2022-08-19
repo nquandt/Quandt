@@ -13,9 +13,9 @@ namespace Quandt.Expressions.Javascript.NodeHandlers
 
             if (ret.Argument!.Type == Nodes.Identifier)
             {
-                var vari = VariableContextService.GetCurrent()[((Identifier)ret.Argument).Name];
+                var vari = VariableContextService.GetCurrent().GetVariable(((Identifier)ret.Argument).Name);
 
-                return  vari ;
+                return  vari;
             }
 
 

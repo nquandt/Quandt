@@ -12,15 +12,14 @@ namespace Quandt.Expressions.Javascript.NodeHandlers
             var forOf = node as ForOfStatement;
             if (forOf == null) return Expression.Empty();
 
-            using (VariableContextService.Enter())
+            return VariableContextService.Enter(() =>
             {
                 var left = (Walk(forOf.Left) as BlockExpression).Expressions.Single() as ParameterExpression;
 
                 var right = Walk(forOf.Right);
 
                 return ForEach(right, left, Walk(forOf.Body));
-
-            }
+            });
         }
 
         private static Expression ForEach(Expression collection, System.Linq.Expressions.ParameterExpression loopVar, Expression loopContent)

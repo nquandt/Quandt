@@ -2,14 +2,20 @@
 
 namespace Quandt.Expressions.Javascript.Contexts
 {
+    public class ExpressionWrap
+    {
+        public ParameterExpression Expression { get; set; }
+        public Node Node { get; set; }
+    }
+
     public class VariableContext
     {
-        private readonly Dictionary<string, ParameterExpression> _variables;
+        private readonly Dictionary<string, ExpressionWrap> _variables;
         public VariableContext? ParentContext = null;
 
         public VariableContext(VariableContext? parentContext = null)
         {
-            _variables = new Dictionary<string, ParameterExpression>();
+            _variables = new Dictionary<string, ExpressionWrap>();
             ParentContext = parentContext;
         }
 
@@ -17,7 +23,19 @@ namespace Quandt.Expressions.Javascript.Contexts
         {
             get
             {
-                return _variables.Values;
+                return _variables.Values.Select(x => x.Expression);
+            }
+        }
+
+        public void AssignTypeTo(string name, Type type)
+        {
+            var wrap = GetVariableAsWrap(name);
+
+            if (wrap != null)
+            {
+                //var currentType = (Type)wrap.Node.GetAdditionalData("IntendedType");
+
+                wrap.Node.SetAdditionalData("IntendedType", type);
             }
         }
 
@@ -31,46 +49,80 @@ namespace Quandt.Expressions.Javascript.Contexts
                 {
                     allVars = allVars.Concat(ParentContext.AllVariables);
                 }
-                allVars = allVars.Concat(_variables.Values);
+                allVars = allVars.Concat(CurrentVariables);
 
                 return allVars;
             }
         }
 
-        public void Add(ParameterExpression parameterExpression)
+        private string CleanName(string name)
         {
-            if (ParentContext != null && ParentContext[parameterExpression.Name] != null)
+            return name.Replace("$", "_dollar_");
+        }
+
+        public ParameterExpression AddParameter(Type type, string name, Node node)
+        {
+            if (ParentContext != null && ParentContext.GetVariableAsWrap(name) != null)
             {
                 throw new InvalidOperationException("Cannot have a second variable of same name in this scope");
             }
 
-            _variables.Add(parameterExpression.Name!, parameterExpression);
+            var vari = System.Linq.Expressions.Expression.Parameter(type, CleanName(name));
+
+            _variables.Add(name, new ExpressionWrap
+            {
+                Expression = vari,
+                Node = node
+            });
+
+            return vari;
         }
 
-        public ParameterExpression? this[string name]
+        public ParameterExpression AddVariable(Type type, string name, Node node)
         {
-            get
+            if (ParentContext != null && ParentContext.GetVariableAsWrap(name) != null)
             {
-                if (!_variables.ContainsKey(name))
-                {
-                    if (ParentContext != null)
-                    {
-                        var expr = ParentContext[name];
-                        if (expr != null)
-                        {
-                            return ParentContext[name];
-                        }
-                    }
-                    else
-                    {
-                        //throw new InvalidOperationException("That variable was never declared");
-                    }
+                throw new InvalidOperationException("Cannot have a second variable of same name in this scope");
+            }
 
-                    return null;
+            var vari = System.Linq.Expressions.Expression.Variable(type, CleanName(name));
+
+            _variables.Add(name, new ExpressionWrap
+            {
+                Expression = vari,
+                Node = node
+            });
+
+            return vari;
+        }
+
+        public ParameterExpression? GetVariable(string name)
+        {            
+            return GetVariableAsWrap(name)?.Expression;
+        }
+
+        public ExpressionWrap? GetVariableAsWrap(string name)
+        {            
+            if (!_variables.ContainsKey(name))
+            {
+                if (ParentContext != null)
+                {
+                    var expr = ParentContext.GetVariableAsWrap(name);
+                    if (expr != null)
+                    {
+                        return expr;
+                    }
+                }
+                else
+                {
+                    //throw new InvalidOperationException("That variable was never declared");
                 }
 
-                return _variables[name];
+                return null;
             }
+
+            return _variables[name];
+
         }
     }
 }

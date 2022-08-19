@@ -10,20 +10,36 @@ namespace Quandt.Expressions.Javascript.NodeHandlers
         {
             var array = node as ArrayExpression;
             if (array == null) return Expression.Empty();
-
-            var newListXxp = Expression.New(typeof(List<string>));
-
+            
             if (array.Elements.Count > 0)
             {
-                System.Reflection.MethodInfo addMethod = typeof(List<string>).GetMethod("Add");
+                
+                var walkedElements = Walk(array.Elements);
 
-                var elements = Walk(array.Elements).Select(x => Expression.ElementInit(addMethod, x));
+                var listTypeExp = walkedElements.FirstOrDefault(x => typeof(System.Linq.Expressions.ParameterExpression).IsAssignableFrom(x.GetType())
+                    || typeof(System.Linq.Expressions.ConstantExpression).IsAssignableFrom(x.GetType()));
+                Type listType;
+                if (listTypeExp != null)
+                {
+                    listType = listTypeExp.Type;                    
+                }
+                else
+                {
+                    listType = typeof(object);
+                }
+                var generic = typeof(List<>);
+                var constructed = generic.MakeGenericType(listType);
 
-                return Expression.ListInit(newListXxp, elements); //Expression.MakeBinary(System.Linq.Expressions.ExpressionType., left, right) };
+                var newListXxp = Expression.New(constructed);
+
+                System.Reflection.MethodInfo addMethod = constructed.GetMethod("Add");
+
+                var elements = walkedElements.Select(x => Expression.ElementInit(addMethod, Expression.Convert(x, listType)));
+
+                return Expression.ListInit(newListXxp, elements);
             }
-
-            //TODO use NewList not NewArray cuz we cant implement push pop on an array....
-            return newListXxp;
+            
+            return Expression.New(typeof(List<object>));
         }
     }
 }

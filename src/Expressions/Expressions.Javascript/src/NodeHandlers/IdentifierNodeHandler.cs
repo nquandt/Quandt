@@ -10,7 +10,12 @@ namespace Quandt.Expressions.Javascript.NodeHandlers
         {
             var ident = node as Identifier;
 
-            var vari = VariableContextService.GetCurrent()[ident.Name];
+            var vari = VariableContextService.GetCurrent().GetVariable(ident.Name);
+
+            if (vari == null)
+            {
+                return Expression.Constant(ident.Name);
+            }
 
             return vari;
         }

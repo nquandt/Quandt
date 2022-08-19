@@ -1,4 +1,5 @@
-﻿using Expression = System.Linq.Expressions.Expression;
+﻿using Quandt.Expressions.Javascript.Extensions;
+using Expression = System.Linq.Expressions.Expression;
 
 namespace Quandt.Expressions.Javascript.NodeHandlers
 {
@@ -11,82 +12,142 @@ namespace Quandt.Expressions.Javascript.NodeHandlers
             if (cal == null) return Expression.Empty();
 
             //var walked = Walk(cal.Callee);
-
+            
             if (cal.Callee is Esprima.Ast.MemberExpression member)
             {
-                var ident = Walk(member.Object) as System.Linq.Expressions.ParameterExpression;
+                var identt = Walk(member.Object) as System.Linq.Expressions.ParameterExpression;
 
                 var method = member.Property as Identifier;
                 var methodName = method.Name;
 
-                var methInfo = GetMethodInfo(ident.Type, methodName);
+                var args = cal.Arguments.Any() ? Walk(cal.Arguments) : Enumerable.Empty<Expression>();
 
-                if (cal.Arguments.Any())
-                {
-                    var args = Walk(cal.Arguments);
-
-                    return Expression.Call(ident, methInfo, args);
-                }
-
-
-                return Expression.Call(ident, methInfo);
+               return GetMethodCall(identt, methodName, args);
+            }
+            else if (cal.Callee is Esprima.Ast.Identifier ident)
+            {
+                Services.VariableContextService.GetCurrent().GetVariable(ident.Name);
             }
 
 
 
-
-            throw new Exception("That walked is not implemented");
+            throw new Exception("That Callee is not implemented yes");
             //TODO use NewList not NewArray cuz we cant implement push pop on an array....
             //return new Expression[] { Expression.Empty() };
         }
 
 
-        private System.Reflection.MethodInfo GetMethodInfo(Type baseType, string methodName)
+        private Expression GetMethodCall(System.Linq.Expressions.ParameterExpression param, string methodName, IEnumerable<Expression> args)
         {
-            var cSharpMethodName = GetMethodNameForType(baseType, methodName);
+            var cSharpMethod = GetMethodNameForType(param, methodName, args);
 
-            if (cSharpMethodName == null)
+            if (cSharpMethod == null)
             {
                 throw new Exception("That method hasn't been implemented");
             }
 
-            return baseType.GetMethods().First(m => m.Name == cSharpMethodName && m.IsPublic);
+            return cSharpMethod;
         }
 
-        private string GetMethodNameForType(Type baseType, string methodName)
+        private Expression GetMethodNameForType(System.Linq.Expressions.ParameterExpression param, string methodName, IEnumerable<Expression> args)
         {
-            if (baseType == typeof(string))
+            if (param.Type == typeof(string))
             {
-                return GetMethodNameForString(methodName);
+                return GetMethodForString(param, methodName, args);
             }
-            else if (baseType == typeof(List<string>))
+            else if (param.Type.IsGenericType && param.Type.GetGenericTypeDefinition() == typeof(List<>))
             {
-                return GetMethodNameForList(methodName);
-            }
-
-            return null;
-        }
-
-        private string GetMethodNameForString(string methodName)
-        {
-            switch (methodName)
+                return GetMethodNameForList(param, methodName, args, param.Type);
+            }else if (param.Type == typeof(object))
             {
-                case "trim":
-                    return "Trim";
+                return GetMethodFromObjectShims(param, methodName, args);                
             }
 
             return null;
         }
 
-        private string GetMethodNameForList(string methodName)
+        private Expression GetMethodFromObjectShims(Expression param, string methodName, IEnumerable<Expression> args)
         {
+            Expression expr;
             switch (methodName)
             {
                 case "push":
-                    return "Add";
+                    var args2 = new List<Expression>() { param };
+                    args2.AddRange(args.Select(x => Expression.Convert(x, typeof(object))));
+                    if (args2.Count < 4)
+                    {
+                        args2.Add(Expression.Constant(null, typeof(object)));
+                    }
+                    expr = Expression.Call(null, typeof(ObjectExtensions).GetMethod(nameof(ObjectExtensions.Add)), args2);
+                    break;
+                case "charCodeAt":
+                    var args3 = new List<Expression>() { param };
+                    args3.AddRange(args);
+                    expr = Expression.Call(null, typeof(ObjectExtensions).GetMethod(nameof(ObjectExtensions.CharCodeAt)), args3);
+                    break;
+                default:
+                    throw new NotSupportedException();
+            }
+            return expr;
+        }
+
+
+        private Expression GetMethodForString(System.Linq.Expressions.Expression param, string methodName, IEnumerable<Expression> args)
+        {         
+            Expression expr;
+            switch (methodName)
+            {
+                case "trim":
+                    expr = GetFirstMatchingMethod<string>(param, "Trim", args);
+                    break;
+                case "charCodeAt":
+                    var args2 = new List<Expression>() { param };
+                    args2.AddRange(args);
+                    expr = Expression.Call(null, typeof(StringExtensions).GetMethod("CharCodeAt"), args2);
+                    break;
+                default:
+                    throw new NotSupportedException();
             }
 
-            return null;
+            if (param is System.Linq.Expressions.ParameterExpression param1)
+            {
+                Services.VariableContextService.GetCurrent().AssignTypeTo(param1.Name, typeof(string));
+            }
+            return expr;
+        }
+
+        private Expression GetMethodNameForList(System.Linq.Expressions.Expression param, string methodName, IEnumerable<Expression> args, Type listType)
+        {            
+            Expression expr;
+            switch (methodName)
+            {
+                case "push":
+                    expr = GetFirstMatchingMethod(param, "Add", args, listType);
+                    break;
+                default:
+                    throw new NotSupportedException();
+            }
+
+            if (param is System.Linq.Expressions.ParameterExpression param1)
+            {
+                Services.VariableContextService.GetCurrent().AssignTypeTo(param1.Name, typeof(List<string>));
+            }
+            return expr;
+        }
+
+        private Expression GetFirstMatchingMethod<T>(System.Linq.Expressions.Expression param, string methodName, IEnumerable<Expression> args)
+        {
+            return GetFirstMatchingMethod(param,methodName, args, typeof(T));
+        }
+
+        private Expression GetFirstMatchingMethod(System.Linq.Expressions.Expression param, string methodName, IEnumerable<Expression> args, Type type)
+        {
+            if (args.Any())
+            {
+                return Expression.Call(param, type.GetMethods().First(m => m.Name == methodName && m.IsPublic), args);
+            }
+
+            return Expression.Call(param, type.GetMethods().First(m => m.Name == methodName && m.IsPublic));
         }
     }
 }

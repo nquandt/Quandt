@@ -9,10 +9,34 @@ namespace Quandt.Expressions.Javascript.Services
     public class VariableContextService
     {
         private static readonly List<VariableContext> _stack = new List<VariableContext>();
-        
+
         public static VariableContext GetCurrent() => Peek();
 
-        public static IDisposable Enter() => Push(GetStack());
+        public static System.Linq.Expressions.Expression Enter(Func<System.Linq.Expressions.Expression> func)
+        {
+            var doAgain = false;
+            System.Linq.Expressions.Expression exp;
+            using (Push(GetStack()))
+            {
+                exp = func();
+
+                var currVars = VariableContextService.GetCurrent().CurrentVariables.ToArray();
+
+                if (currVars.Any(x => x.Type == typeof(object) || x.Type == typeof(List<object>)))
+                {
+                    doAgain = true;
+                }
+            }
+            if (doAgain)
+            {
+                using (Push(GetStack()))
+                {
+                    exp = func();
+                 
+                }
+            }
+            return exp;
+        }
 
         protected static List<VariableContext> GetStack()
         {

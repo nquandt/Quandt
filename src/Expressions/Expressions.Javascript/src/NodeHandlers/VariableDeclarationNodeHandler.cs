@@ -13,28 +13,37 @@ namespace Quandt.Expressions.Javascript.NodeHandlers
             var dec = node as VariableDeclaration;
             if (dec == null) { return Expression.Empty(); }
 
+            var inits = new List<System.Linq.Expressions.ParameterExpression>(); 
             var variables = new List<Expression>();
             foreach (var declaration in dec.Declarations)
             {
                 if (declaration.Init == null)
                 {
-                    var vari = Expression.Variable(typeof(string), ((Identifier)declaration.Id).Name);
-                    VariableContextService.GetCurrent().Add(vari);
+                    Type type = typeof(object);
+                    Type intendedType = (Type)node.GetAdditionalData("IntendedType");
+                    if (intendedType != null)
+                    {
+                        type = intendedType;
+                    }
+                     
+                    var vari = VariableContextService.GetCurrent().AddVariable(type, ((Identifier)declaration.Id).Name, node);
 
-                    variables.Add(vari);
+                    inits.Add(vari);
+                    var assign = Expression.Assign(vari, Expression.New(vari.Type));
+                    variables.Add(assign);
                 }
                 else
                 {
                     var walked = Walk(declaration.Init);
 
-                    var vari = Expression.Variable(walked.Type, ((Identifier)declaration.Id).Name);
-                    VariableContextService.GetCurrent().Add(vari);
-
+                    var vari = VariableContextService.GetCurrent().AddVariable(walked.Type, ((Identifier)declaration.Id).Name, node);
+                    inits.Add(vari);
                     var assign = Expression.Assign(vari, walked);
                     variables.Add(assign);
                 }
-            }
-            return Expression.Block(variables);
+            }            
+
+            return Expression.Block(inits, variables);
         }
     }
 }

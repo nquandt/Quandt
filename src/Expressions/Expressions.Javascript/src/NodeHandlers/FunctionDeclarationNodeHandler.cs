@@ -7,33 +7,38 @@ namespace Quandt.Expressions.Javascript.NodeHandlers
     [NodesEnum(Nodes.FunctionDeclaration)]
     internal class FunctionDeclarationNodeHandler : INodeHandler<Esprima.Ast.FunctionDeclaration>
     {
+        // ReadableExpressions doesn't seem to know if a
+        // lambda is just an if statement and outputs without braces...
+        // For now I pulled ReadableExpressions locally to change the LambdaTranslation.cs but hope to find a better fix.
+
         public Expression Execute(Node node)
         {
             var func = node as FunctionDeclaration;
             if (func == null) { return Expression.Empty(); }
 
-            using (VariableContextService.Enter())
+            var lambda = (LambdaExpression)VariableContextService.Enter(() =>
             {
                 var name = func.Id!.Name;
 
-                var paramExprs = func.Params.Cast<Identifier>().Select(x => Expression.Parameter(typeof(string), x.Name));
-                foreach (var param in paramExprs)
-                {
-                    VariableContextService.GetCurrent().Add(param);
-                }
+                var paramExprs = func.Params.Cast<Identifier>().Select(x => VariableContextService.GetCurrent().AddParameter(typeof(object), x.Name, node)).ToArray();
 
                 BlockExpression block = Walk(func.Body) as BlockExpression;
 
+                var lambda1 = Expression.Lambda(block, name, paramExprs);
 
-                var lambda = Expression.Lambda(block, name, paramExprs.Select(x => VariableContextService.GetCurrent()[x.Name]).ToArray());
+                return lambda1;
+                //return Expression.Lambda(block, name, paramExprs);
+            });
 
-                var lambFunc = Expression.Variable(lambda.Type, lambda.Name);
-                VariableContextService.GetCurrent().Add(lambFunc);
+            VariableContextService.GetCurrent().AssignTypeTo(lambda.Name, lambda.Type);
 
-                var assign = Expression.Assign(lambFunc, lambda);               
+            var lambFunc = VariableContextService.GetCurrent().GetVariable(lambda.Name);            
 
-                return assign;
-            }
+            var assign = Expression.Assign(lambFunc, lambda);
+
+            return Expression.Block(new ParameterExpression[] { lambFunc }, assign);
+
+
         }
     }
 }

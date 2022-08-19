@@ -68,7 +68,7 @@ namespace Quandt.Expressions.Javascript.NodeHandlers
 
                 if (isToken)
                 {
-                    var param = VariableContextService.GetCurrent()[token];
+                    var param = VariableContextService.GetCurrent().GetVariable(token);
                     if (param == null) continue;
 
                     formatObjs.Add(param);
