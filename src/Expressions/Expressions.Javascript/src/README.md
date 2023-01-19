@@ -13,4 +13,99 @@ The TreeWalker Walk method will log to console when an Expression node doesnt ha
 
 Thanks for checking this out.
 
-tag: Metaprogamming;
+The following was converted using this library (if anyone knows how to two column this on github I'll put the code side-by-side
+```javascript
+function main(parm1, parm2) {
+  var topLevel = "this is top level and hopefully works";
+
+  function hello(nod1){
+      var thisThing = 4 + nod1 + topLevel;
+      var thisThing2 = nod1 + thisThing;
+
+
+      return thisThing2;
+  }
+
+  function hello2(nod1){
+      var thisThing = 4 + nod1;
+      var thisThing2 = nod1 + thisThing;
+
+
+      return thisThing2;
+  }
+
+  const files = [ 'foo.txt ', '.bar', '   ', 'baz.foo' ];
+  let filePaths = [];
+
+  for (let file of files) {
+    const fileName = file.trim();
+    if(fileName) {
+      const filePath = `~/cool_app/${fileName}hello${fileName}yooo`;
+      filePaths.push(filePath);
+    }
+  }
+
+  return filePaths;
+}
+```
+
+
+```csharp
+namespace GenerateJS
+{
+    public static class ImAJsFile
+    {
+        public static void Execute()
+        {
+            Func<string, string, List<string>> main = (string parm1, string parm2) =>
+            {
+                var topLevel = "this is top level and hopefully works";
+                Func<string, string> hello = (string nod1) =>
+                {
+                    var thisThing = 4 + nod1 + topLevel;
+                    var thisThing2 = nod1 + thisThing;
+                    return thisThing2;
+                };
+                Func<string, string> hello2 = (string nod1) =>
+                {
+                    thisThing = 4 + nod1;
+                    thisThing2 = nod1 + thisThing;
+                    return thisThing2;
+                };
+                files = new List<string>
+                {
+                    "foo.txt ",
+                    ".bar",
+                    "   ",
+                    "baz.foo"
+                };
+                filePaths = new List<string>();
+                IEnumerator<string> enumerator;
+                enumerator = files.GetEnumerator();
+                while (true)
+                {
+                    if (enumerator.MoveNext())
+                    {
+                        string file;
+                        file = enumerator.Current;
+                        fileName = file.Trim();
+                        if (fileName != null)
+                        {
+                            filePath = string.Format("`~/cool_app/{0}hello{1}yooo`", fileName, fileName);
+                            filePaths.Add(filePath);
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+                return filePaths;
+            };
+        }
+    }
+}
+```
+
+
+tag: Metaprogamming
