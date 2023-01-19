@@ -16,7 +16,7 @@ namespace Quandt.Endpoints
     {
         public static class WithRequest<TRequest> where TRequest : new()
         {
-            public abstract class WithResult<TResponse> : IWithRequestEndpoint<TRequest>, IWithResultEndpoint<TResponse>
+            public abstract class WithResult<TResponse> : IWithRequestEndpoint<TRequest>, IWithResultEndpoint<TResponse> where TResponse : class
             {                
                 public HttpContext Context { get; set; }
                 ISerializerFactory IBaseEndpointAsync.SerializerFactory
@@ -59,10 +59,10 @@ namespace Quandt.Endpoints
                     }
                     set
                     {
-                        _result = (TResponse)value;
+                        _result = (Result)value;
                     }
                 }
-                private TResponse _result;
+                private Result _result;
 
                 private readonly EndpointStatus _status = new EndpointStatus();
                 public abstract Task<Result<TResponse>> HandleAsync(TRequest request, CancellationToken cancellationToken);
@@ -71,12 +71,9 @@ namespace Quandt.Endpoints
                     try
                     {
                         var result = await HandleAsync(_request, ct);
-                        if (result.Success)
-                        {
-                            _result = result.ResultObject;
-                        }
-                        else
-                        {
+                        _result = result;
+                        if (result.Status != Status.SUCCESS)
+                        {                            
                             _status.IsOkay = false;
                             _status.Message = result.Message;
                         }

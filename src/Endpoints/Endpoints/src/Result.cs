@@ -6,15 +6,23 @@ using System.Threading.Tasks;
 
 namespace Quandt.Endpoints
 {
+    public enum Status
+    {
+        SUCCESS,
+        ERROR,
+        BADREQUEST,
+        UNAUTHORIZED
+    }
+
     public class Result
     {
-        public bool Success { get; set; } = true;
-        public object Error { get; set; } = null;
-        public string Message { get; set; } = "";
+        public Status Status { get; set; } = Status.SUCCESS;
+        public object? Error { get; set; } = null;
+        public string? Message { get; set; } = null;
     }
-    public class Result<T> : Result
+
+    public class Result<T> : Result where T : class
     {
-        public T ResultObject { get; set; } = default(T);
-        
+        public T? Data { get; set; } = null;
     }
 }
